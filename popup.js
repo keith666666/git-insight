@@ -180,15 +180,24 @@ function updateProjectHealth(
     const hoursSinceLastCommit = Math.floor(
       (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
     );
+    const minutesSinceLastCommit = Math.floor(
+      (timeDiff % (1000 * 60 * 60)) / (1000 * 60)
+    );
 
     let timeSinceLastCommit;
     if (daysSinceLastCommit > 0) {
       timeSinceLastCommit = `${daysSinceLastCommit.toLocaleString()} day${
         daysSinceLastCommit !== 1 ? "s" : ""
       }`;
-    } else {
+    } else if (hoursSinceLastCommit > 0) {
       timeSinceLastCommit = `${hoursSinceLastCommit.toLocaleString()} hour${
         hoursSinceLastCommit !== 1 ? "s" : ""
+      } ${minutesSinceLastCommit} minute${
+        minutesSinceLastCommit !== 1 ? "s" : ""
+      }`;
+    } else {
+      timeSinceLastCommit = `${minutesSinceLastCommit} minute${
+        minutesSinceLastCommit !== 1 ? "s" : ""
       }`;
     }
 
@@ -327,3 +336,14 @@ function safelyUpdateElement(id, value) {
     console.warn(`Element with id "${id}" not found`);
   }
 }
+
+document.getElementById("toggle-token").addEventListener("click", function () {
+  const tokenInput = document.getElementById("github-token");
+  if (tokenInput.type === "password") {
+    tokenInput.type = "text";
+    this.textContent = "Hide";
+  } else {
+    tokenInput.type = "password";
+    this.textContent = "Show";
+  }
+});

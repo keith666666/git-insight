@@ -7,11 +7,40 @@
   <body>
     <div id="app">
       <h1>GitInsight</h1>
-      <div id="token-input">
-        <input type="text" id="github-token" placeholder="Enter GitHub Token" />
-        <button id="save-token">Save Token</button>
+      <div id="token-info">
+        <p>
+          A personal access token (PAT) is required to increase the GitHub API
+          rate limit.
+          <a
+            href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens"
+            target="_blank"
+            >Create a PAT</a
+          >
+          with no additional scopes and paste it below.
+        </p>
+        <p>
+          <a
+            href="https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#primary-rate-limit-for-authenticated-users"
+            target="_blank"
+            >Learn more about rate limits</a
+          >
+        </p>
       </div>
-      <button id="refresh-btn">Refresh Data</button>
+      <div id="token-input">
+        <input
+          type="password"
+          id="github-token"
+          placeholder="Enter GitHub Token"
+        />
+        <button id="save-token">Save</button>
+        <button id="toggle-token" title="Show/Hide Token">Show</button>
+      </div>
+      <button
+        id="refresh-btn"
+        title="Data is cached for 5 minutes. Click to force refresh."
+      >
+        Refresh Data
+      </button>
       <div id="repo-info">
         <p>
           <em
