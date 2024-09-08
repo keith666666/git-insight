@@ -30,12 +30,10 @@ function loadData() {
     const repoInfo = extractRepoInfo(url);
 
     if (repoInfo) {
-      updateDebugInfo(`Fetching data for: ${repoInfo.owner}/${repoInfo.repo}`);
       fetchRepoData(repoInfo.owner, repoInfo.repo);
     } else {
       document.getElementById("repo-info").innerHTML =
         "<p>Not a GitHub repository page.</p>";
-      updateDebugInfo("Not a GitHub repository page");
     }
   });
 }
@@ -59,8 +57,6 @@ function extractRepoInfo(url) {
 
 async function fetchRepoData(owner, repo) {
   try {
-    updateDebugInfo("Fetching repository data...");
-
     // Fetch main repository data
     const repoData = await fetchGitHubAPI(`/repos/${owner}/${repo}`);
 
@@ -82,13 +78,6 @@ async function fetchRepoData(owner, repo) {
       fetchGitHubAPI(`/repos/${owner}/${repo}/issues?state=all&per_page=100`),
       fetchGitHubAPI(`/repos/${owner}/${repo}/pulls?state=all&per_page=100`),
     ]);
-
-    console.log("Issues data:", issuesData);
-    console.log("Pulls data:", pullsData);
-
-    updateDebugInfo(
-      `Fetched ${issuesData.length} issues and ${pullsData.length} pull requests (limited to 100 each)`
-    );
 
     // Fetch release data
     const releasesData = await fetchGitHubAPI(
@@ -112,15 +101,12 @@ async function fetchRepoData(owner, repo) {
     updateCodeMetrics(repoData, languagesData);
     updateReleaseManagement(releasesData);
 
-    updateDebugInfo("Data fetched successfully");
-
     // Reset refresh button
     const refreshBtn = document.getElementById("refresh-btn");
     refreshBtn.textContent = "Refresh Data";
     refreshBtn.disabled = false;
   } catch (error) {
     console.error("Error fetching repo data:", error);
-    updateDebugInfo(`Error: ${error.message}`);
     let errorMessage = "Error fetching repository data.";
     if (error.message.includes("API rate limit exceeded")) {
       errorMessage =
@@ -226,7 +212,6 @@ function updateProjectHealth(
 
   // Pull Request Merge Time
   const mergedPRs = pullsData.filter((pr) => pr.merged_at);
-  console.log("Merged PRs:", mergedPRs);
   let avgMergeTime = 0;
   if (mergedPRs.length > 0) {
     avgMergeTime =
@@ -322,11 +307,6 @@ function updateReleaseManagement(releasesData) {
       })})`
     );
   }
-}
-
-function updateDebugInfo(message) {
-  const debugInfo = document.getElementById("debug-info");
-  debugInfo.textContent += message + "\n";
 }
 
 function safelyUpdateElement(id, value) {
