@@ -3,7 +3,8 @@
   "name": "GitInsight",
   "version": "1.0",
   "description": "GitInsight: Your GitHub Repository Dashboard. Instantly view key metrics like creation date, creator, issues, star history, and more for any GitHub repo.",
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["https://api.github.com/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"

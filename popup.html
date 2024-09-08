@@ -7,12 +7,35 @@
   <body>
     <div id="app">
       <h1>GitInsight</h1>
+      <div id="token-input">
+        <input type="text" id="github-token" placeholder="Enter GitHub Token" />
+        <button id="save-token">Save Token</button>
+      </div>
+      <button id="refresh-btn">Refresh Data</button>
       <div id="repo-info">
+        <h2>Repository Overview</h2>
         <p>Repository: <span id="repo-name"></span></p>
         <p>Creator: <span id="repo-creator"></span></p>
         <p>Created on: <span id="repo-created"></span></p>
         <p>Stars: <span id="repo-stars"></span></p>
+        <p>Forks: <span id="repo-forks"></span></p>
+        <p>Watchers: <span id="repo-watchers"></span></p>
         <p>Open Issues: <span id="repo-issues"></span></p>
+        <p>Open Pull Requests: <span id="repo-prs"></span></p>
+
+        <h2>Activity Metrics</h2>
+        <p>Last Commit: <span id="last-commit"></span></p>
+        <p>Commit Frequency: <span id="commit-frequency"></span></p>
+        <p>Contributors: <span id="contributors"></span></p>
+        <p>Recent Activity: <span id="recent-activity"></span></p>
+
+        <h2>Code Metrics</h2>
+        <p>Repository Size: <span id="repo-size"></span></p>
+        <p>Branches: <span id="branches"></span></p>
+        <p>Primary Language: <span id="primary-language"></span></p>
+        <p>Language Distribution: <span id="language-distribution"></span></p>
+
+        <!-- Add more sections for other metrics -->
       </div>
     </div>
     <script src="popup.js"></script>

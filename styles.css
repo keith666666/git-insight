@@ -12,3 +12,46 @@ h1 {
 #repo-info p {
   margin: 5px 0;
 }
+
+#refresh-btn {
+  display: inline-block;
+  margin: 10px 10px 10px 0;
+  padding: 5px 10px;
+  background-color: #0366d6;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#refresh-btn:hover {
+  background-color: #0056b3;
+}
+
+#refresh-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+#token-input {
+  margin-bottom: 10px;
+}
+
+#github-token {
+  width: 200px;
+  padding: 5px;
+  margin-right: 5px;
+}
+
+#save-token {
+  padding: 5px 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#save-token:hover {
+  background-color: #218838;
+}
