@@ -27,9 +27,12 @@ async function fetchGitHubAPI(endpoint) {
 
   if (githubToken) {
     headers.append("Authorization", `token ${githubToken}`);
+    console.log("Using GitHub token for authentication"); // Add this line
   } else {
     console.warn("No GitHub token found. Requests may be rate-limited.");
   }
+
+  console.log(`Fetching: https://api.github.com${endpoint}`); // Add this line
 
   const response = await fetch(`https://api.github.com${endpoint}`, {
     headers,
@@ -37,6 +40,7 @@ async function fetchGitHubAPI(endpoint) {
 
   if (!response.ok) {
     const errorData = await response.json();
+    console.error("API Error:", errorData); // Add this line
     throw new Error(
       `GitHub API request failed: ${response.status} - ${errorData.message}`
     );

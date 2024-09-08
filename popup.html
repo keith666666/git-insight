@@ -13,6 +13,12 @@
       </div>
       <button id="refresh-btn">Refresh Data</button>
       <div id="repo-info">
+        <p>
+          <em
+            >Note: Some metrics are based on the most recent 100 items due to
+            API limitations.</em
+          >
+        </p>
         <h2>Repository Overview</h2>
         <p>Repository: <span id="repo-name"></span></p>
         <p>Creator: <span id="repo-creator"></span></p>
@@ -21,21 +27,38 @@
         <p>Forks: <span id="repo-forks"></span></p>
         <p>Watchers: <span id="repo-watchers"></span></p>
         <p>Open Issues: <span id="repo-issues"></span></p>
-        <p>Open Pull Requests: <span id="repo-prs"></span></p>
+        <!-- Remove this line: -->
+        <!-- <p>Open Pull Requests: <span id="repo-prs"></span></p> -->
+        <p>Contributors: <span id="repo-contributors"></span></p>
 
-        <h2>Activity Metrics</h2>
-        <p>Last Commit: <span id="last-commit"></span></p>
-        <p>Commit Frequency: <span id="commit-frequency"></span></p>
-        <p>Contributors: <span id="contributors"></span></p>
-        <p>Recent Activity: <span id="recent-activity"></span></p>
+        <h2>Project Health</h2>
+        <p>Commit Velocity: <span id="commit-velocity"></span></p>
+        <p>Time Since Last Commit: <span id="time-since-last-commit"></span></p>
+        <p>
+          Avg Issue Resolution Time:
+          <span id="avg-issue-resolution-time"></span>
+        </p>
+        <p>Avg PR Merge Time: <span id="avg-pr-merge-time"></span></p>
+        <p>PR Acceptance Rate: <span id="pr-acceptance-rate"></span></p>
+
+        <h2>Community Engagement</h2>
+        <p>
+          First-Time Contributors: <span id="first-time-contributors"></span>
+        </p>
+        <p>Top Contributors: <span id="top-contributors"></span></p>
 
         <h2>Code Metrics</h2>
         <p>Repository Size: <span id="repo-size"></span></p>
-        <p>Branches: <span id="branches"></span></p>
+        <!-- Removed: <p>Branches: <span id="branches"></span></p> -->
         <p>Primary Language: <span id="primary-language"></span></p>
         <p>Language Distribution: <span id="language-distribution"></span></p>
 
-        <!-- Add more sections for other metrics -->
+        <h2>Release Management</h2>
+        <p>Release Frequency: <span id="release-frequency"></span></p>
+        <p>Latest Release: <span id="latest-release"></span></p>
+
+        <h2>Debug Information</h2>
+        <pre id="debug-info"></pre>
       </div>
     </div>
     <script src="popup.js"></script>

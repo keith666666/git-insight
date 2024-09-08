@@ -30,10 +30,12 @@ function loadData() {
     const repoInfo = extractRepoInfo(url);
 
     if (repoInfo) {
+      updateDebugInfo(`Fetching data for: ${repoInfo.owner}/${repoInfo.repo}`);
       fetchRepoData(repoInfo.owner, repoInfo.repo);
     } else {
       document.getElementById("repo-info").innerHTML =
         "<p>Not a GitHub repository page.</p>";
+      updateDebugInfo("Not a GitHub repository page");
     }
   });
 }
@@ -50,34 +52,67 @@ function refreshData() {
 }
 
 function extractRepoInfo(url) {
-  const match = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+  if (!url) return null;
+  const match = url.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
   return match ? { owner: match[1], repo: match[2] } : null;
 }
 
 async function fetchRepoData(owner, repo) {
   try {
+    updateDebugInfo("Fetching repository data...");
+
+    // Fetch main repository data
     const repoData = await fetchGitHubAPI(`/repos/${owner}/${repo}`);
-    const contributorsData = await fetchGitHubAPI(
-      `/repos/${owner}/${repo}/contributors`
-    );
-    const languagesData = await fetchGitHubAPI(
-      `/repos/${owner}/${repo}/languages`
-    );
-    const commitsData = await fetchGitHubAPI(
-      `/repos/${owner}/${repo}/commits?per_page=100`
-    );
-    const pullsData = await fetchGitHubAPI(`/repos/${owner}/${repo}/pulls`);
-    const branchesData = await fetchGitHubAPI(
-      `/repos/${owner}/${repo}/branches`
-    );
-    const eventsData = await fetchGitHubAPI(
-      `/repos/${owner}/${repo}/events?per_page=100`
+
+    // Fetch contributors, languages, latest commit, and participation data in a single call
+    const [
+      contributorsData,
+      languagesData,
+      latestCommitData,
+      participationData,
+    ] = await Promise.all([
+      fetchGitHubAPI(`/repos/${owner}/${repo}/contributors?per_page=100`),
+      fetchGitHubAPI(`/repos/${owner}/${repo}/languages`),
+      fetchGitHubAPI(`/repos/${owner}/${repo}/commits?per_page=1`),
+      fetchGitHubAPI(`/repos/${owner}/${repo}/stats/participation`),
+    ]);
+
+    // Fetch issues and pull requests separately, limited to 100 each
+    const [issuesData, pullsData] = await Promise.all([
+      fetchGitHubAPI(`/repos/${owner}/${repo}/issues?state=all&per_page=100`),
+      fetchGitHubAPI(`/repos/${owner}/${repo}/pulls?state=all&per_page=100`),
+    ]);
+
+    console.log("Issues data:", issuesData);
+    console.log("Pulls data:", pullsData);
+
+    updateDebugInfo(
+      `Fetched ${issuesData.length} issues and ${pullsData.length} pull requests (limited to 100 each)`
     );
 
-    updateRepoOverview(repoData);
-    updateActivityMetrics(repoData, contributorsData, commitsData, eventsData);
-    updateCodeMetrics(repoData, languagesData, branchesData);
-    updatePullRequestMetrics(pullsData);
+    // Fetch release data
+    const releasesData = await fetchGitHubAPI(
+      `/repos/${owner}/${repo}/releases?per_page=100`
+    );
+
+    updateRepoOverview(repoData, contributorsData);
+    updateProjectHealth(
+      repoData,
+      latestCommitData[0],
+      participationData,
+      issuesData,
+      pullsData
+    );
+    updateCommunityEngagement(
+      repoData,
+      contributorsData,
+      issuesData,
+      pullsData
+    );
+    updateCodeMetrics(repoData, languagesData);
+    updateReleaseManagement(releasesData);
+
+    updateDebugInfo("Data fetched successfully");
 
     // Reset refresh button
     const refreshBtn = document.getElementById("refresh-btn");
@@ -85,10 +120,13 @@ async function fetchRepoData(owner, repo) {
     refreshBtn.disabled = false;
   } catch (error) {
     console.error("Error fetching repo data:", error);
+    updateDebugInfo(`Error: ${error.message}`);
     let errorMessage = "Error fetching repository data.";
     if (error.message.includes("API rate limit exceeded")) {
       errorMessage =
         "API rate limit exceeded. Please check if your GitHub Personal Access Token is correct and has the necessary permissions.";
+    } else {
+      errorMessage = `Error: ${error.message}`;
     }
     document.getElementById("repo-info").innerHTML = `
       <p>${errorMessage}</p>
@@ -117,57 +155,135 @@ async function fetchGitHubAPI(endpoint) {
   });
 }
 
-function updateRepoOverview(data) {
-  document.getElementById("repo-name").textContent = data.full_name;
-  document.getElementById("repo-creator").textContent = data.owner.login;
-  document.getElementById("repo-created").textContent = new Date(
-    data.created_at
-  ).toLocaleDateString();
-  document.getElementById("repo-stars").textContent = data.stargazers_count;
-  document.getElementById("repo-forks").textContent = data.forks_count;
-  document.getElementById("repo-watchers").textContent = data.subscribers_count;
-  document.getElementById("repo-issues").textContent = data.open_issues_count;
+function updateRepoOverview(repoData, contributorsData) {
+  safelyUpdateElement("repo-name", repoData.full_name);
+  safelyUpdateElement("repo-creator", repoData.owner.login);
+  safelyUpdateElement("repo-created", new Date(repoData.created_at));
+  safelyUpdateElement("repo-stars", repoData.stargazers_count);
+  safelyUpdateElement("repo-forks", repoData.forks_count);
+  safelyUpdateElement("repo-watchers", repoData.subscribers_count);
+  safelyUpdateElement("repo-issues", repoData.open_issues_count);
+  safelyUpdateElement(
+    "repo-contributors",
+    contributorsData.length >= 100 ? "100+" : contributorsData.length
+  );
 }
 
-function updateActivityMetrics(
+function updateProjectHealth(
+  repoData,
+  latestCommit,
+  participationData,
+  issuesData,
+  pullsData
+) {
+  // Commit Velocity (using last 4 weeks of data from participation stats)
+  const recentCommits = participationData.all
+    .slice(-4)
+    .reduce((a, b) => a + b, 0);
+  safelyUpdateElement(
+    "commit-velocity",
+    `${recentCommits.toLocaleString()} commits in the last 4 weeks`
+  );
+
+  // Time Since Last Commit
+  if (latestCommit) {
+    const lastCommitDate = new Date(latestCommit.commit.author.date);
+    const now = new Date();
+    const timeDiff = now - lastCommitDate;
+    const daysSinceLastCommit = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const hoursSinceLastCommit = Math.floor(
+      (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+
+    let timeSinceLastCommit;
+    if (daysSinceLastCommit > 0) {
+      timeSinceLastCommit = `${daysSinceLastCommit.toLocaleString()} day${
+        daysSinceLastCommit !== 1 ? "s" : ""
+      }`;
+    } else {
+      timeSinceLastCommit = `${hoursSinceLastCommit.toLocaleString()} hour${
+        hoursSinceLastCommit !== 1 ? "s" : ""
+      }`;
+    }
+
+    safelyUpdateElement("time-since-last-commit", timeSinceLastCommit);
+  } else {
+    safelyUpdateElement("time-since-last-commit", "N/A");
+  }
+
+  // Issue Resolution Time
+  const closedIssues = issuesData.filter((issue) => issue.state === "closed");
+  const avgResolutionTime =
+    closedIssues.reduce((sum, issue) => {
+      return sum + (new Date(issue.closed_at) - new Date(issue.created_at));
+    }, 0) / closedIssues.length;
+  safelyUpdateElement(
+    "avg-issue-resolution-time",
+    `${Math.round(
+      avgResolutionTime / (1000 * 60 * 60 * 24)
+    ).toLocaleString()} days (based on last 100 issues)`
+  );
+
+  // Pull Request Merge Time
+  const mergedPRs = pullsData.filter((pr) => pr.merged_at);
+  console.log("Merged PRs:", mergedPRs);
+  let avgMergeTime = 0;
+  if (mergedPRs.length > 0) {
+    avgMergeTime =
+      mergedPRs.reduce((sum, pr) => {
+        const mergeTime = new Date(pr.merged_at) - new Date(pr.created_at);
+        return sum + (mergeTime > 0 ? mergeTime : 0);
+      }, 0) / mergedPRs.length;
+  }
+  const avgMergeDays = Math.round(avgMergeTime / (1000 * 60 * 60 * 24));
+  safelyUpdateElement(
+    "avg-pr-merge-time",
+    mergedPRs.length > 0
+      ? `${avgMergeDays.toLocaleString()} days (based on last 100 PRs)`
+      : "N/A (based on last 100 PRs)"
+  );
+
+  // PR Acceptance Rate
+  const closedPRs = pullsData.filter((pr) => pr.state === "closed");
+  const prAcceptanceRate =
+    closedPRs.length > 0
+      ? ((mergedPRs.length / closedPRs.length) * 100).toFixed(2)
+      : "N/A";
+  safelyUpdateElement(
+    "pr-acceptance-rate",
+    closedPRs.length > 0
+      ? `${prAcceptanceRate}% (based on last 100 PRs)`
+      : "N/A (based on last 100 PRs)"
+  );
+}
+
+function updateCommunityEngagement(
   repoData,
   contributorsData,
-  commitsData,
-  eventsData
+  issuesData,
+  pullsData
 ) {
-  document.getElementById("last-commit").textContent = new Date(
-    commitsData[0].commit.author.date
-  ).toLocaleDateString();
-  document.getElementById("contributors").textContent = contributorsData.length;
-
-  // Calculate commit frequency
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  const recentCommits = commitsData.filter(
-    (commit) => new Date(commit.commit.author.date) > oneMonthAgo
+  // First-Time Contributors
+  const firstTimeContributors = contributorsData.filter(
+    (contributor) => contributor.contributions === 1
   );
-  const commitFrequency = recentCommits.length;
-  document.getElementById(
-    "commit-frequency"
-  ).textContent = `${commitFrequency} commits in the last month`;
+  safelyUpdateElement("first-time-contributors", firstTimeContributors.length);
 
-  // Calculate recent activity
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  const recentEvents = eventsData.filter(
-    (event) => new Date(event.created_at) > oneWeekAgo
-  );
-  const recentActivity = recentEvents.length;
-  document.getElementById(
-    "recent-activity"
-  ).textContent = `${recentActivity} events in the last week`;
+  // Top Contributors
+  const topContributors = contributorsData
+    .sort((a, b) => b.contributions - a.contributions)
+    .slice(0, 5)
+    .map((contributor) => `${contributor.login} (${contributor.contributions})`)
+    .join(", ");
+  safelyUpdateElement("top-contributors", topContributors);
 }
 
-function updateCodeMetrics(repoData, languagesData, branchesData) {
-  document.getElementById("repo-size").textContent = `${(
-    repoData.size / 1024
-  ).toFixed(2)} MB`;
-  document.getElementById("primary-language").textContent = repoData.language;
+function updateCodeMetrics(repoData, languagesData) {
+  safelyUpdateElement(
+    "repo-size",
+    `${(repoData.size / 1024).toFixed(2).toLocaleString()} MB`
+  );
+  safelyUpdateElement("primary-language", repoData.language);
 
   // Calculate total bytes
   const totalBytes = Object.values(languagesData).reduce((a, b) => a + b, 0);
@@ -177,16 +293,57 @@ function updateCodeMetrics(repoData, languagesData, branchesData) {
       ([lang, bytes]) => `${lang}: ${((bytes / totalBytes) * 100).toFixed(2)}%`
     )
     .join(", ");
-  document.getElementById("language-distribution").textContent =
-    languageDistribution;
-
-  // Add branch count
-  document.getElementById("branches").textContent = branchesData.length;
+  safelyUpdateElement("language-distribution", languageDistribution);
 }
 
-function updatePullRequestMetrics(pullsData) {
-  document.getElementById("repo-prs").textContent = pullsData.length;
-  // Add more pull request metrics calculations
+function updateReleaseManagement(releasesData) {
+  // Release Frequency
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  const recentReleases = releasesData.filter(
+    (release) => new Date(release.published_at) > oneYearAgo
+  );
+  safelyUpdateElement(
+    "release-frequency",
+    `${recentReleases.length.toLocaleString()} releases in the last year`
+  );
+
+  // Latest Release
+  if (releasesData.length > 0) {
+    const latestRelease = releasesData[0];
+    safelyUpdateElement(
+      "latest-release",
+      `${latestRelease.tag_name} (${new Date(
+        latestRelease.published_at
+      ).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })})`
+    );
+  }
 }
 
-// Add more functions for other metrics
+function updateDebugInfo(message) {
+  const debugInfo = document.getElementById("debug-info");
+  debugInfo.textContent += message + "\n";
+}
+
+function safelyUpdateElement(id, value) {
+  const element = document.getElementById(id);
+  if (element) {
+    if (typeof value === "number") {
+      element.textContent = value.toLocaleString();
+    } else if (value instanceof Date) {
+      element.textContent = value.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } else {
+      element.textContent = value;
+    }
+  } else {
+    console.warn(`Element with id "${id}" not found`);
+  }
+}
