@@ -84,7 +84,7 @@ async function fetchRepoData(owner, repo) {
       `/repos/${owner}/${repo}/releases?per_page=100`
     );
 
-    updateRepoOverview(repoData, contributorsData);
+    updateRepoOverview(repoData, contributorsData, issuesData, pullsData);
     updateProjectHealth(
       repoData,
       latestCommitData[0],
@@ -141,10 +141,36 @@ async function fetchGitHubAPI(endpoint) {
   });
 }
 
-function updateRepoOverview(repoData, contributorsData) {
+function updateRepoOverview(repoData, contributorsData, issuesData, pullsData) {
   safelyUpdateElement("repo-name", repoData.full_name);
   safelyUpdateElement("repo-creator", repoData.owner.login);
-  safelyUpdateElement("repo-created", new Date(repoData.created_at));
+
+  // Calculate time ago for creation date
+  const createdDate = new Date(repoData.created_at);
+  const now = new Date();
+  const timeDiff = now - createdDate;
+  const yearsAgo = Math.floor(timeDiff / (1000 * 60 * 60 * 24 * 365.25));
+  const monthsAgo = Math.floor(timeDiff / (1000 * 60 * 60 * 24 * 30.44));
+  const daysAgo = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+  let timeAgoString;
+  if (yearsAgo > 0) {
+    timeAgoString = `${yearsAgo} year${yearsAgo !== 1 ? "s" : ""} ago`;
+  } else if (monthsAgo > 0) {
+    timeAgoString = `${monthsAgo} month${monthsAgo !== 1 ? "s" : ""} ago`;
+  } else {
+    timeAgoString = `${daysAgo} day${daysAgo !== 1 ? "s" : ""} ago`;
+  }
+
+  safelyUpdateElement(
+    "repo-created",
+    `${createdDate.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })} (${timeAgoString})`
+  );
+
   safelyUpdateElement("repo-stars", repoData.stargazers_count);
   safelyUpdateElement("repo-forks", repoData.forks_count);
   safelyUpdateElement("repo-watchers", repoData.subscribers_count);
@@ -229,11 +255,22 @@ function updateProjectHealth(
         return sum + (mergeTime > 0 ? mergeTime : 0);
       }, 0) / mergedPRs.length;
   }
-  const avgMergeDays = Math.round(avgMergeTime / (1000 * 60 * 60 * 24));
+
+  let avgMergeTimeString = "";
+  if (avgMergeTime >= 86400000) {
+    // More than or equal to 24 hours
+    avgMergeTimeString = `${(avgMergeTime / 86400000).toFixed(1)} days`;
+  } else if (avgMergeTime >= 3600000) {
+    // More than or equal to 1 hour
+    avgMergeTimeString = `${(avgMergeTime / 3600000).toFixed(1)} hours`;
+  } else {
+    avgMergeTimeString = `${(avgMergeTime / 60000).toFixed(1)} minutes`;
+  }
+
   safelyUpdateElement(
     "avg-pr-merge-time",
     mergedPRs.length > 0
-      ? `${avgMergeDays.toLocaleString()} days (based on last 100 PRs)`
+      ? `${avgMergeTimeString} (based on last 100 PRs)`
       : "N/A (based on last 100 PRs)"
   );
 
@@ -282,11 +319,19 @@ function updateCodeMetrics(repoData, languagesData) {
   // Calculate total bytes
   const totalBytes = Object.values(languagesData).reduce((a, b) => a + b, 0);
 
-  const languageDistribution = Object.entries(languagesData)
-    .map(
-      ([lang, bytes]) => `${lang}: ${((bytes / totalBytes) * 100).toFixed(2)}%`
-    )
-    .join(", ");
+  // Sort languages by percentage in descending order
+  const sortedLanguages = Object.entries(languagesData)
+    .map(([lang, bytes]) => ({
+      name: lang,
+      percentage: (bytes / totalBytes) * 100,
+    }))
+    .sort((a, b) => b.percentage - a.percentage);
+
+  // Format language distribution
+  const languageDistribution = sortedLanguages
+    .map((lang) => `${lang.name}: ${lang.percentage.toFixed(2)}%`)
+    .join("\n");
+
   safelyUpdateElement("language-distribution", languageDistribution);
 }
 
@@ -315,6 +360,8 @@ function updateReleaseManagement(releasesData) {
         day: "numeric",
       })})`
     );
+  } else {
+    safelyUpdateElement("latest-release", "No releases");
   }
 }
 
