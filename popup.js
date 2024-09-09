@@ -84,6 +84,9 @@ async function fetchRepoData(owner, repo) {
       `/repos/${owner}/${repo}/releases?per_page=100`
     );
 
+    // Fetch star history data
+    const starHistoryData = await fetchStarHistory(owner, repo);
+
     updateRepoOverview(repoData, contributorsData, issuesData, pullsData);
     updateProjectHealth(
       repoData,
@@ -100,6 +103,7 @@ async function fetchRepoData(owner, repo) {
     );
     updateCodeMetrics(repoData, languagesData);
     updateReleaseManagement(releasesData);
+    updateStarHistory(starHistoryData, owner, repo);
 
     // Reset refresh button
     const refreshBtn = document.getElementById("refresh-btn");
@@ -139,6 +143,32 @@ async function fetchGitHubAPI(endpoint) {
       }
     );
   });
+}
+
+async function fetchStarHistory(owner, repo) {
+  // This is a placeholder. You'll need to implement the actual API call
+  // to fetch star history data from star-history.com or GitHub API
+  return [];
+}
+
+function updateStarHistory(starHistoryData, owner, repo) {
+  const container = document.getElementById("star-history-container");
+  const img = document.createElement("img");
+  img.style.width = "100%";
+  img.style.maxWidth = "600px";
+  img.style.height = "auto";
+  img.alt = "Star History Chart";
+
+  let chartUrl = `https://api.star-history.com/svg?repos=${owner}/${repo}&type=Date`;
+  img.src = chartUrl;
+
+  const link = document.createElement("a");
+  link.href = `https://star-history.com/#${owner}/${repo}&Date`;
+  link.target = "_blank";
+  link.appendChild(img);
+
+  container.innerHTML = "";
+  container.appendChild(link);
 }
 
 function updateRepoOverview(repoData, contributorsData, issuesData, pullsData) {
