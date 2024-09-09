@@ -3,6 +3,38 @@
   <head>
     <title>GitInsight</title>
     <link rel="stylesheet" type="text/css" href="styles.css" />
+    <style>
+      .loader {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+      .loader-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #3498db;
+        margin: 0 5px;
+        animation: pulse 1.4s infinite ease-in-out both;
+      }
+      .loader-dot:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+      .loader-dot:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+      @keyframes pulse {
+        0%,
+        80%,
+        100% {
+          transform: scale(0);
+        }
+        40% {
+          transform: scale(1);
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="app">
@@ -41,57 +73,66 @@
       >
         Refresh Data
       </button>
-      <div id="repo-info">
-        <p>
-          <em
-            >Note: Some metrics are based on the most recent 100 items due to
-            API limitations.</em
-          >
-        </p>
-        <h2>Repository Overview</h2>
-        <p>Repository: <span id="repo-name"></span></p>
-        <p>Creator: <span id="repo-creator"></span></p>
-        <p>Created on: <span id="repo-created"></span></p>
-        <p>Stars: <span id="repo-stars"></span></p>
-        <p>Forks: <span id="repo-forks"></span></p>
-        <p>Watchers: <span id="repo-watchers"></span></p>
-        <p>Open Issues + PRs: <span id="repo-issues"></span></p>
-        <!-- Remove this line: -->
-        <!-- <p>Open Pull Requests: <span id="repo-prs"></span></p> -->
-        <p>Contributors: <span id="repo-contributors"></span></p>
-
-        <h2>Project Health</h2>
-        <p>Commit Velocity: <span id="commit-velocity"></span></p>
-        <p>Time Since Last Commit: <span id="time-since-last-commit"></span></p>
-        <p>
-          Avg Issue Resolution Time:
-          <span id="avg-issue-resolution-time"></span>
-        </p>
-        <p>Avg PR Merge Time: <span id="avg-pr-merge-time"></span></p>
-        <p>PR Acceptance Rate: <span id="pr-acceptance-rate"></span></p>
-
-        <h2>Community Engagement</h2>
-        <p>
-          First-Time Contributors: <span id="first-time-contributors"></span>
-        </p>
-        <p>Top Contributors: <span id="top-contributors"></span></p>
-
-        <h2>Code Metrics</h2>
-        <p>Repository Size: <span id="repo-size"></span></p>
-        <!-- Removed: <p>Branches: <span id="branches"></span></p> -->
-        <p>Primary Language: <span id="primary-language"></span></p>
-        <p>Language Distribution: <span id="language-distribution"></span></p>
-
-        <h2>Release Management</h2>
-        <p>Release Frequency: <span id="release-frequency"></span></p>
-        <p>Latest Release: <span id="latest-release"></span></p>
+      <div id="loader" class="loader">
+        <div class="loader-dot"></div>
+        <div class="loader-dot"></div>
+        <div class="loader-dot"></div>
+        <p>Loading repository data...</p>
       </div>
+      <div id="repo-content" style="display: none">
+        <div id="repo-info">
+          <p>
+            <em
+              >Note: Some metrics are based on the most recent 100 items due to
+              API limitations.</em
+            >
+          </p>
+          <h2>Repository Overview</h2>
+          <p>Repository: <span id="repo-name"></span></p>
+          <p>Creator: <span id="repo-creator"></span></p>
+          <p>Created on: <span id="repo-created"></span></p>
+          <p>Stars: <span id="repo-stars"></span></p>
+          <p>Forks: <span id="repo-forks"></span></p>
+          <p>Watchers: <span id="repo-watchers"></span></p>
+          <p>Open Issues + PRs: <span id="repo-issues"></span></p>
+          <!-- Remove this line: -->
+          <!-- <p>Open Pull Requests: <span id="repo-prs"></span></p> -->
+          <p>Contributors: <span id="repo-contributors"></span></p>
 
-      <h2>Star History</h2>
-      <div
-        id="star-history-container"
-        style="text-align: center; margin-top: 20px"
-      ></div>
+          <h2>Project Health</h2>
+          <p>Commit Velocity: <span id="commit-velocity"></span></p>
+          <p>
+            Time Since Last Commit: <span id="time-since-last-commit"></span>
+          </p>
+          <p>
+            Avg Issue Resolution Time:
+            <span id="avg-issue-resolution-time"></span>
+          </p>
+          <p>Avg PR Merge Time: <span id="avg-pr-merge-time"></span></p>
+          <p>PR Acceptance Rate: <span id="pr-acceptance-rate"></span></p>
+
+          <h2>Community Engagement</h2>
+          <p>
+            First-Time Contributors: <span id="first-time-contributors"></span>
+          </p>
+          <p>Top Contributors: <span id="top-contributors"></span></p>
+
+          <h2>Code Metrics</h2>
+          <p>Repository Size: <span id="repo-size"></span></p>
+          <!-- Removed: <p>Branches: <span id="branches"></span></p> -->
+          <p>Primary Language: <span id="primary-language"></span></p>
+          <p>Language Distribution: <span id="language-distribution"></span></p>
+
+          <h2>Release Management</h2>
+          <p>Release Frequency: <span id="release-frequency"></span></p>
+          <p>Latest Release: <span id="latest-release"></span></p>
+        </div>
+        <h2>Star History</h2>
+        <div
+          id="star-history-container"
+          style="text-align: center; margin-top: 20px"
+        ></div>
+      </div>
     </div>
     <script src="popup.js"></script>
   </body>

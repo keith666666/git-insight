@@ -24,16 +24,28 @@ function loadToken() {
   });
 }
 
+function showLoader() {
+  document.getElementById("loader").style.display = "block";
+  document.getElementById("repo-content").style.display = "none";
+}
+
+function hideLoader() {
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("repo-content").style.display = "block";
+}
+
 function loadData() {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     const url = tabs[0].url;
     const repoInfo = extractRepoInfo(url);
 
     if (repoInfo) {
+      showLoader(); // Show loader before fetching data
       fetchRepoData(repoInfo.owner, repoInfo.repo);
     } else {
-      document.getElementById("repo-info").innerHTML =
+      document.getElementById("repo-content").innerHTML =
         "<p>Not a GitHub repository page.</p>";
+      hideLoader();
     }
   });
 }
@@ -42,6 +54,8 @@ function refreshData() {
   const refreshBtn = document.getElementById("refresh-btn");
   refreshBtn.textContent = "Refreshing...";
   refreshBtn.disabled = true;
+
+  showLoader(); // Show loader before refreshing data
 
   // Clear cached data
   chrome.storage.local.set({ cachedData: {} }, () => {
@@ -105,6 +119,8 @@ async function fetchRepoData(owner, repo) {
     updateReleaseManagement(releasesData);
     updateStarHistory(starHistoryData, owner, repo);
 
+    hideLoader(); // Hide loader after all data is loaded and displayed
+
     // Reset refresh button
     const refreshBtn = document.getElementById("refresh-btn");
     refreshBtn.textContent = "Refresh Data";
@@ -118,10 +134,12 @@ async function fetchRepoData(owner, repo) {
     } else {
       errorMessage = `Error: ${error.message}`;
     }
-    document.getElementById("repo-info").innerHTML = `
+    document.getElementById("repo-content").innerHTML = `
       <p>${errorMessage}</p>
       <p>Make sure you've entered a valid GitHub token and saved it.</p>
     `;
+
+    hideLoader(); // Hide loader in case of error
 
     // Reset refresh button
     const refreshBtn = document.getElementById("refresh-btn");
