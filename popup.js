@@ -65,8 +65,41 @@ function refreshData() {
 
 function extractRepoInfo(url) {
   if (!url) return null;
-  const match = url.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
-  return match ? { owner: match[1], repo: match[2] } : null;
+
+  try {
+    // Create URL object for better parsing
+    const urlObj = new URL(url);
+
+    // Check if it's a GitHub domain
+    if (!urlObj.hostname.includes("github.com")) return null;
+
+    // Split the pathname by '/' and filter out empty strings
+    const pathParts = urlObj.pathname
+      .split("/")
+      .filter((part) => part.length > 0);
+
+    // A valid repo URL must have at least owner and repo parts
+    if (pathParts.length < 2) return null;
+
+    // Extract owner and repo name
+    const owner = pathParts[0];
+    const repo = pathParts[1];
+
+    // Skip if owner or repo is one of GitHub's special routes
+    const specialRoutes = [
+      "settings",
+      "marketplace",
+      "explore",
+      "topics",
+      "trending",
+    ];
+    if (specialRoutes.includes(owner)) return null;
+
+    return { owner, repo };
+  } catch (e) {
+    console.error("Error parsing GitHub URL:", e);
+    return null;
+  }
 }
 
 async function fetchRepoData(owner, repo) {
