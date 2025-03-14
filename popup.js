@@ -73,6 +73,13 @@ function extractRepoInfo(url) {
     // Check if it's a GitHub domain
     if (!urlObj.hostname.includes("github.com")) return null;
 
+    // Directly return null for GitHub subdomains that aren't www or blank subdomain
+    if (
+      urlObj.hostname !== "github.com" &&
+      urlObj.hostname !== "www.github.com"
+    )
+      return null;
+
     // Split the pathname by '/' and filter out empty strings
     const pathParts = urlObj.pathname
       .split("/")
@@ -85,15 +92,47 @@ function extractRepoInfo(url) {
     const owner = pathParts[0];
     const repo = pathParts[1];
 
-    // Skip if owner or repo is one of GitHub's special routes
+    // Expanded list of special routes that aren't repositories
     const specialRoutes = [
       "settings",
       "marketplace",
       "explore",
       "topics",
       "trending",
+      "docs",
+      "enterprise",
+      "features",
+      "pricing",
+      "login",
+      "join",
+      "about",
+      "security",
+      "team",
+      "customer-stories",
+      "organizations",
+      "enterprise-login",
+      "collections",
+      "events",
+      "sponsors",
+      "apps",
+      "watching",
+      "account",
+      "notifications",
+      "new",
+      "issues",
+      "pulls",
+      "codespaces",
+      "discussions",
+      "dashboard",
+      "en",
+      "rest",
+      "graphql",
     ];
+
     if (specialRoutes.includes(owner)) return null;
+
+    // Additional check for known non-repository pattern
+    if (pathParts[0] === "search" || pathParts[0] === "orgs") return null;
 
     return { owner, repo };
   } catch (e) {
