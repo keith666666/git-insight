@@ -150,7 +150,7 @@ async function fetchRepoData(owner, repo) {
     );
     updateCodeMetrics(repoData, languagesData);
     updateReleaseManagement(releasesData);
-    updateStarHistory(starHistoryData, owner, repo);
+    updateStarHistory(owner, repo);
 
     hideLoader(); // Hide loader after all data is loaded and displayed
 
@@ -202,24 +202,45 @@ async function fetchStarHistory(owner, repo) {
   return [];
 }
 
-function updateStarHistory(starHistoryData, owner, repo) {
+function updateStarHistory(owner, repo) {
   const container = document.getElementById("star-history-container");
+
+  // Show loading indicator
+  container.innerHTML =
+    "<div class='loading-spinner'>Loading star history chart...</div>";
+
   const img = document.createElement("img");
   img.style.width = "100%";
   img.style.maxWidth = "600px";
   img.style.height = "auto";
   img.alt = "Star History Chart";
 
+  // Set up the image source
   let chartUrl = `https://api.star-history.com/svg?repos=${owner}/${repo}&type=Date`;
-  img.src = chartUrl;
 
+  // Create the link that will contain the image
   const link = document.createElement("a");
   link.href = `https://star-history.com/#${owner}/${repo}&Date`;
   link.target = "_blank";
-  link.appendChild(img);
 
-  container.innerHTML = "";
-  container.appendChild(link);
+  // Handle image load complete
+  img.onload = function () {
+    // Replace loading indicator with the image
+    container.innerHTML = "";
+    link.appendChild(img);
+    container.appendChild(link);
+  };
+
+  // Handle image load error
+  img.onerror = function () {
+    container.innerHTML =
+      "<p>Unable to load star history chart. <a href='" +
+      link.href +
+      "' target='_blank'>View on star-history.com</a></p>";
+  };
+
+  // Start loading the image
+  img.src = chartUrl;
 }
 
 function updateRepoOverview(repoData, contributorsData, issuesData, pullsData) {
