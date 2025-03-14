@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GitInsight",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Instant GitHub repository analytics. Get key metrics on project health, community engagement, and code statistics at a glance.",
   "permissions": ["activeTab", "storage"],
   "host_permissions": ["https://api.github.com/*"],
