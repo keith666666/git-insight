@@ -171,7 +171,7 @@ async function fetchRepoData(owner, repo) {
     );
 
     // Fetch star history data
-    const starHistoryData = await fetchStarHistory(owner, repo);
+    // const starHistoryData = await fetchStarHistory(owner, repo);
 
     updateRepoOverview(repoData, contributorsData, issuesData, pullsData);
     updateProjectHealth(
